@@ -1,0 +1,17 @@
+{
+  "_comment": "Canonical STRCx rebase event, fully pinned per DECISIONS.md D9/D10. tx_signature is real, located via a throttled authority-history scan on public mainnet RPC (2026-09-15) and independently confirmed via Solana RPC's own jsonParsed instruction decoder (type 'updateMultiplier', authority and mint both matching, newMultiplier/newMultiplierTimestamp exact string matches to old_multiplier/effective_timestamp and new_multiplier/effective_timestamp below). No remaining placeholder values.",
+  "mint": "Xs78JED6PFZxWc2wCEPspZW9kL3Se5J7L5TChKgsidH",
+  "tx_signature": "5SNeWC8YzL7rEHYKmmgYrradpYgTboBRY6WdrH4Z8xwHuK2q4zRd2AthjDtKjYc7vf7vFGxYFA3vGZ69Rg6XDjsm",
+  "old_multiplier": 1.0753686544887686,
+  "new_multiplier": 1.0808929977256367,
+  "effective_timestamp": "2026-08-30T23:55:00.000Z",
+  "dividend_size": 0.5,
+  "prior_close_price": 97.33000183105469,
+  "source_mode": "manual",
+  "source_url": "https://stockanalysis.com/stocks/strc/dividend/",
+  "expected_ratio": 0.3596013494457029,
+  "actual_ratio": 0.5137162231583225,
+  "discrepancy": 0.15411487371261967,
+  "tolerance_used": 0.01,
+  "status": "discrepancy_flagged"
+}
