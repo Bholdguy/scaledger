@@ -36,9 +36,9 @@ Every verdict traces to exactly two independently-sourced, stored facts a user c
 
 This build is honest about its own limits rather than papering over them:
 
-- **The xStocks corporate-action API doesn't actually work** — its "public" endpoint returns an authentication error despite being documented as no-auth. The fallback (Strategy's own published dividend record) is used instead, and every record's `source_mode` (`live`/`manual`) is stored — never silently substituted.
-- **The inline UI currently shows the two computed ratios, not the raw sourcing detail** (transaction signature, dividend amount, source label) — that detail is in the exported CSV/JSON record, not the badge/panel yet. Flagged in [`DEMO.md`](./DEMO.md) rather than hidden.
-- Everything else — the mint-level detection mechanism, the real dividend/price data, the on-chain multiplier read, the math, the persistence, the demo replay — is real and automated-test-covered (32 tests, see `tests/`).
+- **The xStocks corporate-action API doesn't actually work** — its "public" endpoint returns an authentication error despite being documented as no-auth. The fallback (Strategy's own published dividend record) is used instead, and every record's `source_mode` (`live`/`manual`) is stored and rendered inline — never silently substituted.
+- The badge's detail panel shows both source facts' full provenance inline: Fact (a) shows the `source_mode` label, the dividend size, the prior close, and a link to the source; Fact (b) shows the real on-chain transaction signature linked to Solana Explorer. Nothing is fabricated when a reference is unavailable — those fields are simply absent, never a placeholder.
+- Everything — the mint-level detection mechanism, the real dividend/price data, the on-chain multiplier read, the math, the persistence, the demo replay, and the inline source disclosure — is real and automated-test-covered (35 tests, see `tests/`).
 
 Full build log and every pivot from the original plan: [`DECISIONS.md`](./DECISIONS.md).
 
