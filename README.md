@@ -2,7 +2,7 @@
 
 **An independent verification layer for tokenized-stock rebases on Solana — the receipt that tokenized stocks don't currently give you.**
 
-Built for the [Stocklana hackathon](https://stocklana.dev) (Sep 2026).
+Built for the [Stocklana hackathon](https://hackathons.solana.com/hackathons/stocklana) (Sep 2026, submissions close Fri Sep 18, 4:00pm ET).
 
 ## The real result
 
@@ -71,9 +71,15 @@ npm start          # single-service production mode — API + built frontend on 
 
 Full spec: [`PRD.md`](./PRD.md), [`ARCHITECTURE.md`](./ARCHITECTURE.md), [`SECURITY.md`](./SECURITY.md), [`TESTING.md`](./TESTING.md). Build progress against every step's Definition of Done: [`TASKS.md`](./TASKS.md).
 
+## Open-source components used
+
+`@solana/web3.js` and `@solana/spl-token` (Solana Foundation, Apache-2.0) for all on-chain reads and Token-2022 instruction decoding; `express` for the API; `vite` for the frontend build; `vitest` + `supertest` + `playwright` for testing. Full list in [`package.json`](./package.json). No forked or vendored code — everything here beyond those libraries is original to this build.
+
 ## Live demo
 
-<!-- SCALEDGER_LIVE_URL -->
+**https://scaledger-production.up.railway.app**
+
+Click "Run Demo" to replay the real STRCx result above without touching live RPC, or paste a wallet address and click "Run Live Check" for the live path.
 
 ## Why Solana
 
