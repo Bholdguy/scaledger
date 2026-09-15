@@ -1,0 +1,763 @@
+<!doctype html>
+<title>Scaledger</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap"
+  rel="stylesheet"
+/>
+<style>
+  :root {
+    --bg: #07060c;
+    --bg-raised: #0e0c17;
+    --bg-raised-2: #14111f;
+    --border: rgba(255, 255, 255, 0.09);
+    --border-strong: rgba(255, 255, 255, 0.16);
+    --text: #f6f4fb;
+    --text-muted: #a19bb8;
+    --text-faint: #6d6785;
+    --accent: #8657e6;
+    --accent-bright: #b993ff;
+    --accent-dim: #4c2f8f;
+    --accent-wash: rgba(134, 87, 230, 0.14);
+    --warn: #f0b429;
+    --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+    --display: "Space Grotesk", "Inter", system-ui, sans-serif;
+    --body-font: "Inter", system-ui, -apple-system, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { background: var(--bg); }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body-font);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection { background: var(--accent-dim); color: #fff; }
+
+  a { color: inherit; }
+
+  img, svg { max-width: 100%; }
+
+  .wrap {
+    max-width: 1240px;
+    margin-inline: auto;
+    padding-inline: 24px;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--display);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  p { margin: 0; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-bright);
+  }
+
+  .muted { color: var(--text-muted); }
+
+  .mono {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ---------- buttons ---------- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 22px;
+    border-radius: 999px;
+    font-family: var(--body-font);
+    font-weight: 600;
+    font-size: 14.5px;
+    text-decoration: none;
+    white-space: nowrap;
+    border: 1px solid transparent;
+    transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn:focus-visible { outline: 2px solid var(--accent-bright); outline-offset: 2px; }
+
+  .btn-solid {
+    background: linear-gradient(180deg, #9a6ef2, var(--accent));
+    color: #fff;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.25) inset, 0 8px 24px -8px rgba(134, 87, 230, 0.65);
+  }
+  .btn-solid:hover { box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset, 0 10px 30px -6px rgba(134, 87, 230, 0.8); }
+
+  .btn-outline {
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--text);
+    border-color: var(--border-strong);
+  }
+  .btn-outline:hover { border-color: var(--accent-bright); background: rgba(255, 255, 255, 0.05); }
+
+  .btn-sm { padding: 8px 18px; font-size: 13.5px; }
+
+  /* ---------- nav ---------- */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(7, 6, 12, 0.72);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-block: 16px;
+    gap: 24px;
+  }
+  .wordmark {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 19px;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .wordmark .dot { color: var(--accent-bright); }
+  .wordmark .mark {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background: linear-gradient(155deg, var(--accent-bright), var(--accent-dim));
+    display: grid;
+    place-items: center;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .nav-links {
+    display: flex;
+    gap: 32px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 14.5px;
+    color: var(--text-muted);
+  }
+  .nav-links a { text-decoration: none; transition: color 0.15s ease; }
+  .nav-links a:hover { color: var(--text); }
+  .nav-actions { display: flex; gap: 10px; align-items: center; }
+  .nav-toggle { display: none; }
+
+  /* ---------- hero ---------- */
+  .hero { position: relative; overflow: clip; padding-block: 88px 0; }
+
+  .arch {
+    position: absolute;
+    top: -140px;
+    left: 50%;
+    translate: -50% 0;
+    width: 1180px;
+    height: 620px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .arch::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background:
+      radial-gradient(closest-side, rgba(185, 147, 255, 0.9), rgba(134, 87, 230, 0.55) 42%, rgba(134, 87, 230, 0) 72%);
+    filter: blur(6px);
+    opacity: 0.85;
+  }
+  .arch::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -40px;
+    translate: -50% 0;
+    width: 920px;
+    height: 420px;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(7, 6, 12, 0) 0%, var(--bg) 68%);
+  }
+
+  .hero-inner {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+  }
+
+  .hero-inner h1 {
+    font-size: clamp(38px, 6vw, 62px);
+    line-height: 1.06;
+  }
+  .hero-inner h1 span { display: block; }
+  .hero-inner h1 .accent-line { color: var(--accent-bright); }
+
+  .hero-sub {
+    max-width: 580px;
+    font-size: 17px;
+    color: var(--text-muted);
+  }
+
+  .hero-actions { display: flex; gap: 14px; margin-top: 6px; flex-wrap: wrap; justify-content: center; }
+
+  /* ---------- receipt strip ---------- */
+  .receipt {
+    position: relative;
+    z-index: 1;
+    margin: 56px auto 0;
+    max-width: 980px;
+    background: rgba(14, 12, 23, 0.82);
+    border: 1px solid var(--border-strong);
+    border-radius: 20px;
+    padding: 22px 28px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.7);
+  }
+  .receipt-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .receipt-tag {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--warn);
+    background: rgba(240, 180, 41, 0.1);
+    border: 1px solid rgba(240, 180, 41, 0.35);
+    padding: 5px 12px;
+    border-radius: 999px;
+    flex-shrink: 0;
+  }
+  .receipt-tag .pip { width: 6px; height: 6px; border-radius: 50%; background: var(--warn); }
+  .receipt-facts {
+    display: flex;
+    gap: 34px;
+    flex-wrap: wrap;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+  }
+  .receipt-fact { display: flex; flex-direction: column; gap: 2px; }
+  .receipt-fact .label {
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .receipt-fact .value {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .receipt-fact .value.pos { color: var(--warn); }
+  .receipt-link {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--accent-bright);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--accent-dim);
+    flex-shrink: 0;
+  }
+  .receipt-link:hover { color: #fff; }
+
+  /* ---------- section shell ---------- */
+  section { padding-block: 104px; }
+  .section-head {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 56px;
+  }
+  .section-head h2 {
+    font-size: clamp(28px, 4vw, 40px);
+    line-height: 1.12;
+  }
+  .section-head .lede {
+    max-width: 560px;
+    color: var(--text-muted);
+    font-size: 16px;
+  }
+
+  /* ---------- feature grid ---------- */
+  .grid-6 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+  .feature-card {
+    position: relative;
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    background: var(--bg-raised);
+    padding: 26px 24px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 178px;
+  }
+  .feature-card .step {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--text-faint);
+    letter-spacing: 0.08em;
+  }
+  .feature-card h3 { font-size: 17px; font-weight: 600; }
+  .feature-card p { font-size: 14px; color: var(--text-muted); line-height: 1.55; }
+  .feature-card .glyph {
+    position: absolute;
+    top: 22px;
+    right: 22px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-faint);
+    opacity: 0.7;
+  }
+
+  .feature-card.hi {
+    background: linear-gradient(160deg, #9a6ef2 0%, var(--accent) 55%, #5f37b8 100%);
+    border-color: transparent;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.25) inset, 0 24px 50px -20px rgba(134, 87, 230, 0.65);
+  }
+  .feature-card.hi .step { color: rgba(255, 255, 255, 0.75); }
+  .feature-card.hi h3 { color: #fff; }
+  .feature-card.hi p { color: rgba(255, 255, 255, 0.85); }
+  .feature-card.hi .glyph { color: rgba(255, 255, 255, 0.65); }
+
+  /* ---------- pipeline band ---------- */
+  .band {
+    background:
+      radial-gradient(1100px 340px at 50% -60%, rgba(185, 147, 255, 0.5), transparent 70%),
+      linear-gradient(155deg, #5b34b1, #3a1f7d 55%, #1c1140);
+    border-radius: 28px;
+    padding: 64px 48px;
+    position: relative;
+    overflow: clip;
+  }
+  .band .section-head h2, .band .section-head .lede { color: #fff; }
+  .band .section-head .lede { color: rgba(255, 255, 255, 0.78); }
+  .band .section-head { margin-bottom: 44px; }
+
+  .band-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+  .band-card {
+    background: rgba(7, 6, 12, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 16px;
+    padding: 22px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 34px;
+    min-height: 150px;
+    backdrop-filter: blur(4px);
+  }
+  .band-card .top-row { display: flex; justify-content: space-between; align-items: flex-start; }
+  .band-card .num {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.55);
+  }
+  .band-card .ring {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 255, 255, 0.55);
+  }
+  .band-card p { color: #fff; font-size: 15.5px; font-weight: 600; line-height: 1.4; }
+
+  /* ---------- real result ---------- */
+  .result-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+  .result-card {
+    border: 1px solid var(--border);
+    background: var(--bg-raised);
+    border-radius: 18px;
+    padding: 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .result-card .tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-bright);
+  }
+  .result-card h3 { font-size: 16px; font-weight: 600; }
+  .result-card .stat {
+    font-family: var(--mono);
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1;
+  }
+  .result-card .stat.warn { color: var(--warn); }
+  .result-card p.desc { font-size: 13.5px; color: var(--text-muted); line-height: 1.55; }
+  .result-card .foot-link {
+    margin-top: auto;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--accent-bright);
+    text-decoration: none;
+    word-break: break-all;
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+  }
+  .result-card .foot-link:hover { color: #fff; }
+
+  .result-cta { text-align: center; margin-top: 40px; }
+
+  /* ---------- footer ---------- */
+  footer { padding-block: 72px 56px; border-top: 1px solid var(--border); }
+  .footer-head { text-align: center; display: flex; flex-direction: column; gap: 8px; margin-bottom: 32px; }
+  .footer-head h2 { font-size: 22px; }
+
+  .badge-row {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 48px;
+  }
+  .badge-pill {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 9px 18px;
+    border-radius: 999px;
+    background: var(--bg-raised-2);
+    border: 1px solid var(--border);
+    font-size: 13.5px;
+    font-weight: 500;
+  }
+  .badge-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-bright); box-shadow: 0 0 10px var(--accent-bright); }
+  .badge-pill .mono-sm { font-family: var(--mono); color: var(--text-muted); font-size: 12.5px; }
+
+  .footer-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 32px;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .footer-links { display: flex; gap: 22px; font-size: 13.5px; color: var(--text-muted); }
+  .footer-links a { text-decoration: none; }
+  .footer-links a:hover { color: var(--text); }
+  .footer-mint { font-family: var(--mono); font-size: 12px; color: var(--text-faint); }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 900px) {
+    .nav-links { display: none; }
+    .grid-6 { grid-template-columns: 1fr 1fr; }
+    .band-grid { grid-template-columns: 1fr 1fr; }
+    .result-grid { grid-template-columns: 1fr; }
+    .band { padding: 48px 26px; }
+  }
+
+  @media (max-width: 620px) {
+    .wrap { padding-inline: 18px; }
+    .grid-6 { grid-template-columns: 1fr; }
+    .band-grid { grid-template-columns: 1fr; }
+    .receipt { flex-direction: column; align-items: flex-start; padding: 22px; }
+    .receipt-facts { gap: 20px; }
+    .nav-actions .btn-outline { display: none; }
+    section { padding-block: 72px; }
+    .hero { padding-block: 56px 0; }
+    .arch { width: 900px; height: 480px; top: -100px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn { transition: none; }
+  }
+</style>
+
+<header>
+  <div class="wrap nav-row">
+    <a href="#" class="wordmark" style="text-decoration:none;">
+      <span class="mark">S</span>
+      Scaledger<span class="dot">.</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#pipeline">How It Works</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#result">Real Result</a></li>
+      <li><a href="https://github.com/Bholdguy/scaledger">Source</a></li>
+      <li><a href="#footer-proof">About</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a class="btn btn-outline btn-sm" href="https://github.com/Bholdguy/scaledger">View on GitHub</a>
+      <a class="btn btn-solid btn-sm" href="/app">Run Live Demo</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="arch" aria-hidden="true"></div>
+    <div class="wrap hero-inner">
+      <p class="eyebrow">Independent verification for tokenized stocks · Solana</p>
+      <h1>
+        <span>The Receipt Tokenized Stocks</span>
+        <span class="accent-line">Don't Give You.</span>
+      </h1>
+      <p class="hero-sub">
+        Scaledger reads the real Token-2022 multiplier instruction behind every rebase, checks it
+        against the real dividend it's supposed to represent, and flags the gap — two
+        independently sourced facts, never a guess, exportable by anyone.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-solid" href="/app">Run Live Demo</a>
+        <a class="btn btn-outline" href="https://github.com/Bholdguy/scaledger">View Source on GitHub</a>
+      </div>
+
+      <div class="receipt">
+        <div class="receipt-head">
+          <span class="receipt-tag"><span class="pip"></span> Discrepancy Flagged</span>
+          <a class="receipt-link" href="https://explorer.solana.com/tx/5SNeWC8YzL7rEHYKmmgYrradpYgTboBRY6WdrH4Z8xwHuK2q4zRd2AthjDtKjYc7vf7vFGxYFA3vGZ69Rg6XDjsm" target="_blank" rel="noopener">
+            tx 5SNeWC8Y…Rg6XDjsm ↗
+          </a>
+        </div>
+        <div class="receipt-facts">
+          <div class="receipt-fact">
+            <span class="label">Ticker</span>
+            <span class="value">STRCx · Aug 30, 2026</span>
+          </div>
+          <div class="receipt-fact">
+            <span class="label">Expected ratio</span>
+            <span class="value">0.359601%</span>
+          </div>
+          <div class="receipt-fact">
+            <span class="label">Actual on-chain ratio</span>
+            <span class="value">0.513716%</span>
+          </div>
+          <div class="receipt-fact">
+            <span class="label">Discrepancy</span>
+            <span class="value pos">+0.154115 pp</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">What runs on every check</p>
+        <h2>Detect. Fetch. Compute. Compare. Flag.</h2>
+        <p class="lede">
+          Five stages, one verdict per mint-level event — computed once, looked up by every
+          wallet that asks, never re-derived, never assumed.
+        </p>
+      </div>
+
+      <div class="grid-6">
+        <div class="feature-card">
+          <span class="step">01 · Detect</span>
+          <span class="glyph">&lt;/&gt;</span>
+          <h3>Mint-Level Detection</h3>
+          <p>Reads the mint's own <code>UpdateMultiplierData</code> instruction — structurally
+            impossible to confuse with a wallet transfer, because it isn't one.</p>
+        </div>
+        <div class="feature-card hi">
+          <span class="step">03 · Compute &amp; Compare</span>
+          <span class="glyph">&lt;/&gt;</span>
+          <h3>Two Facts, Not a Guess</h3>
+          <p>Expected ratio from the real dividend. Actual ratio from the real multiplier.
+            Compared once — never a single number, never an LLM's opinion.</p>
+        </div>
+        <div class="feature-card">
+          <span class="step">02 · Fetch</span>
+          <span class="glyph">&lt;/&gt;</span>
+          <h3>Sourced, Never Silent</h3>
+          <p>Live corporate-action data when the API cooperates; a labeled manual source when it
+            doesn't. <span class="mono" style="font-size:12.5px;">source_mode</span> is always shown.</p>
+        </div>
+        <div class="feature-card">
+          <span class="step">04 · Flag</span>
+          <span class="glyph">&lt;/&gt;</span>
+          <h3>Verified / Flagged / Unavailable</h3>
+          <p>Three honest states, one enum, one place status is ever derived. A missing reference
+            is disclosed — never quietly treated as a match.</p>
+        </div>
+        <div class="feature-card">
+          <span class="step">Dashboard</span>
+          <span class="glyph">&lt;/&gt;</span>
+          <h3>Your Real Holdings</h3>
+          <p>Connect a wallet and see live STRCx balances straight from Solana RPC, plus your
+            own derived dollar impact of the flagged gap.</p>
+        </div>
+        <div class="feature-card">
+          <span class="step">Export</span>
+          <span class="glyph">&lt;/&gt;</span>
+          <h3>Ledger &amp; Export</h3>
+          <p>Every verdict persists to a running ledger and exports as CSV or JSON — everything
+            needed to redo the comparison by hand.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="pipeline">
+    <div class="wrap">
+      <div class="band">
+        <div class="section-head">
+          <p class="eyebrow" style="color:rgba(255,255,255,0.8);">How a verdict actually gets built</p>
+          <h2>Four Steps. Zero Assumptions.</h2>
+          <p class="lede">Every badge you see traces back through exactly this sequence — reproducible by
+            anyone with an RPC endpoint and ten minutes.</p>
+        </div>
+        <div class="band-grid">
+          <div class="band-card">
+            <div class="top-row"><span class="num">01</span><span class="ring"></span></div>
+            <p>Read the mint's real multiplier-update instruction on Solana mainnet</p>
+          </div>
+          <div class="band-card">
+            <div class="top-row"><span class="num">02</span><span class="ring"></span></div>
+            <p>Source the real dividend, net of withholding, independently</p>
+          </div>
+          <div class="band-card">
+            <div class="top-row"><span class="num">03</span><span class="ring"></span></div>
+            <p>Compare both ratios once — store the discrepancy, not an opinion</p>
+          </div>
+          <div class="band-card">
+            <div class="top-row"><span class="num">04</span><span class="ring"></span></div>
+            <p>Export a record any holder can check without trusting our UI</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="result">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Not a demo scenario — a real on-chain event</p>
+        <h2>Real Result: STRCx, Aug 30 2026</h2>
+        <p class="lede">
+          We didn't script a discrepancy to make a good demo. We ran the real pipeline against the
+          real mint and reported whatever it found.
+        </p>
+      </div>
+
+      <div class="result-grid">
+        <div class="result-card">
+          <span class="tag">The Detection</span>
+          <h3>One real instruction, on-chain</h3>
+          <div class="stat">Token-2022</div>
+          <p class="desc">
+            <code>UpdateMultiplierData</code> on mint <span class="mono">Xs78JED6…TChKgsidH</span>,
+            signed by STRCx's own multiplier authority — confirmed independently by Solana RPC's
+            own decoder, not just ours.
+          </p>
+          <a class="foot-link" href="https://explorer.solana.com/tx/5SNeWC8YzL7rEHYKmmgYrradpYgTboBRY6WdrH4Z8xwHuK2q4zRd2AthjDtKjYc7vf7vFGxYFA3vGZ69Rg6XDjsm" target="_blank" rel="noopener">
+            5SNeWC8YzL7rEHYKmmgYrradpYgTboBRY6WdrH4Z8xwHuK2q4zRd2AthjDtKjYc7vf7vFGxYFA3vGZ69Rg6XDjsm ↗
+          </a>
+        </div>
+
+        <div class="result-card">
+          <span class="tag">The Comparison</span>
+          <h3>0.5137% actual vs. 0.3596% expected</h3>
+          <div class="stat warn">+0.154115pp</div>
+          <p class="desc">
+            $0.50/share dividend, net of 30% US withholding, over the real $97.33 prior close —
+            compared against the mint's real multiplier change. Tolerance is 0.01pp. This isn't
+            close.
+          </p>
+          <a class="foot-link" href="/app">
+            Open the live comparison ↗
+          </a>
+        </div>
+
+        <div class="result-card">
+          <span class="tag">The Export</span>
+          <h3>A record you don't have to trust</h3>
+          <div class="stat">CSV / JSON</div>
+          <p class="desc">
+            Both ratios, both sources, both timestamps, the tolerance used, the transaction
+            signature — one file, everything needed to redo the math by hand.
+          </p>
+          <a class="foot-link" href="https://github.com/Bholdguy/scaledger/blob/master/DECISIONS.md">
+            Read the full derivation in DECISIONS.md ↗
+          </a>
+        </div>
+      </div>
+
+      <div class="result-cta">
+        <a class="btn btn-solid" href="/app">Run the Full Demo Yourself</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer id="footer-proof">
+  <div class="wrap">
+    <div class="footer-head">
+      <h2>Verified in the Open</h2>
+      <p class="muted">No claims that aren't also a test.</p>
+    </div>
+    <div class="badge-row">
+      <span class="badge-pill"><span class="dot"></span> Solana Mainnet</span>
+      <span class="badge-pill"><span class="dot"></span> Token-2022 Scaled UI Amount</span>
+      <span class="badge-pill"><span class="dot"></span> 35 / 35 tests passing</span>
+      <span class="badge-pill"><span class="dot"></span> MIT · Open Source</span>
+      <span class="badge-pill"><span class="dot"></span> Built for Stocklana Hackathon</span>
+    </div>
+
+    <div class="footer-bottom">
+      <a class="wordmark" href="#" style="text-decoration:none; font-size:16px;">
+        <span class="mark" style="width:22px;height:22px;font-size:10.5px;">S</span>
+        Scaledger<span class="dot">.</span>
+      </a>
+      <div class="footer-links">
+        <a href="/app">Live Demo</a>
+        <a href="https://github.com/Bholdguy/scaledger">GitHub</a>
+        <a href="https://github.com/Bholdguy/scaledger/blob/master/CONTRACT.md">Contract</a>
+        <a href="https://github.com/Bholdguy/scaledger/blob/master/DEMO.md">Demo Script</a>
+      </div>
+      <span class="footer-mint">mint Xs78JED6PFZxWc2wCEPspZW9kL3Se5J7L5TChKgsidH</span>
+    </div>
+  </div>
+</footer>

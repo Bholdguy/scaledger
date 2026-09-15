@@ -179,14 +179,24 @@ export function createApp() {
     res.send(`${headers.join(',')}\n${values.join(',')}\n`);
   });
 
-  // Production: serve the built frontend from the same service/origin as the API (no
-  // separate dev proxy needed once built — see vite.config.ts for the dev-only proxy).
-  // Only mounted when a build actually exists, so `npm run dev:server` alone (frontend
-  // served by Vite instead) doesn't 404 on every unmatched path.
+  // Production: the marketing landing page owns "/"; the functional dashboard (wallet
+  // connect, verification pipeline, ledger, export) lives at "/app". Both are served from
+  // this same service/origin as the API — no separate dev proxy needed once built (see
+  // vite.config.ts for the dev-only proxy and its matching `base: '/app/'`).
+  const landingDir = path.join(__dirname, '../../landing');
+  if (existsSync(landingDir)) {
+    app.use(express.static(landingDir));
+    app.get('/', (_req, res) => {
+      res.sendFile(path.join(landingDir, 'index.html'));
+    });
+  }
+
+  // Only mounted when a build actually exists, so `npm run dev:server` alone (the
+  // dashboard served by Vite instead, at :5173/app/) doesn't 404 on every /app/* request.
   const distDir = path.join(__dirname, '../../dist');
   if (existsSync(distDir)) {
-    app.use(express.static(distDir));
-    app.get(/^(?!\/api).*/, (_req, res) => {
+    app.use('/app', express.static(distDir));
+    app.get(/^\/app(\/.*)?$/, (_req, res) => {
       res.sendFile(path.join(distDir, 'index.html'));
     });
   }
