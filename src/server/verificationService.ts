@@ -100,17 +100,56 @@ function rowToRecord(row: VerificationRecordRow): VerificationRecord {
   };
 }
 
+/**
+ * The two source facts (CONTRACT.md) plus the derived-not-a-third-fact display fields a
+ * user can click to inspect, per PRD.md Step 6's DoD ("UI must literally render
+ * source_mode... never omit it"). `reference_unavailable` records have all
+ * reference-side fields null (LEFT JOIN — never fabricated).
+ */
+export interface VerificationRecordWithSources extends VerificationRecord {
+  txSignature: string;
+  effectiveTimestamp: string;
+  dividendSize: number | null;
+  priorClosePrice: number | null;
+  source: string | null;
+  sourceMode: 'live' | 'manual' | null;
+  sourceUrl: string | null;
+}
+
+interface VerificationRecordWithSourcesRow extends VerificationRecordRow {
+  tx_signature: string;
+  effective_timestamp: string;
+  dividend_size: number | null;
+  prior_close_price: number | null;
+  source: string | null;
+  source_mode: 'live' | 'manual' | null;
+  source_url: string | null;
+}
+
 /** Pure lookup — never triggers a fresh compute. See ARCHITECTURE.md Section 4. */
-export function getVerificationForMint(mint: string): VerificationRecord | null {
+export function getVerificationForMint(mint: string): VerificationRecordWithSources | null {
   const db = getDb();
   const row = db
     .prepare(
-      `SELECT vr.* FROM VerificationRecords vr
+      `SELECT vr.*, re.tx_signature, re.effective_timestamp,
+              car.size AS dividend_size, car.prior_close_price, car.source, car.source_mode, car.source_url
+       FROM VerificationRecords vr
        JOIN RebaseEvents re ON re.id = vr.rebase_event_id
+       LEFT JOIN CorporateActionReferences car ON car.id = vr.corporate_action_reference_id
        WHERE re.mint = ?
        ORDER BY re.effective_timestamp DESC
        LIMIT 1`,
     )
-    .get(mint) as VerificationRecordRow | undefined;
-  return row ? rowToRecord(row) : null;
+    .get(mint) as VerificationRecordWithSourcesRow | undefined;
+  if (!row) return null;
+  return {
+    ...rowToRecord(row),
+    txSignature: row.tx_signature,
+    effectiveTimestamp: row.effective_timestamp,
+    dividendSize: row.dividend_size,
+    priorClosePrice: row.prior_close_price,
+    source: row.source,
+    sourceMode: row.source_mode,
+    sourceUrl: row.source_url,
+  };
 }

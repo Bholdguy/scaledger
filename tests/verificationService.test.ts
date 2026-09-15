@@ -87,4 +87,37 @@ describe('computeAndRecordVerification — all three outcomes', () => {
     const lookedUp = getVerificationForMint('mint-shared');
     expect(lookedUp?.id).toBe(first.id);
   });
+
+  it('getVerificationForMint joins the real tx_signature and reference source fields (PRD.md Step 6 inline-source requirement)', () => {
+    const event = fakeEvent('e-sourced', 'mint-sourced', 1.0, 1.02);
+    const reference = fakeReference('r-sourced', 1.4, 100);
+    computeAndRecordVerification(event, reference);
+
+    const looked = getVerificationForMint('mint-sourced');
+    expect(looked).not.toBeNull();
+    expect(looked!.txSignature).toBe('sig-e-sourced');
+    expect(looked!.effectiveTimestamp).toBe('2026-01-01T00:00:00.000Z');
+    expect(looked!.dividendSize).toBe(1.4);
+    expect(looked!.priorClosePrice).toBe(100);
+    expect(looked!.source).toBe('synthetic');
+    expect(looked!.sourceMode).toBe('manual');
+    expect(looked!.sourceUrl).toBe('https://example.test/synthetic');
+  });
+
+  it('getVerificationForMint never fabricates reference source fields when the reference is unavailable', () => {
+    const event = fakeEvent('e-sourceless', 'mint-sourceless', 1.0, 1.05);
+    computeAndRecordVerification(event, null);
+
+    const looked = getVerificationForMint('mint-sourceless');
+    expect(looked).not.toBeNull();
+    expect(looked!.status).toBe(VerificationStatus.ReferenceUnavailable);
+    // The event side (fact b) is always real, since RebaseEvents always exists here.
+    expect(looked!.txSignature).toBe('sig-e-sourceless');
+    // The reference side (fact a) must be null, never a placeholder or a zero.
+    expect(looked!.dividendSize).toBeNull();
+    expect(looked!.priorClosePrice).toBeNull();
+    expect(looked!.source).toBeNull();
+    expect(looked!.sourceMode).toBeNull();
+    expect(looked!.sourceUrl).toBeNull();
+  });
 });

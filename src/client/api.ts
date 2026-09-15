@@ -22,6 +22,15 @@ export interface VerificationRecord {
   status: 'verified' | 'discrepancy_flagged' | 'reference_unavailable';
   toleranceUsed: number;
   computedAt: string;
+  // Joined source-fact fields (PRD.md Step 6) — null on the reference side only when
+  // the record's status is reference_unavailable (no CorporateActionReferences row).
+  txSignature: string;
+  effectiveTimestamp: string;
+  dividendSize: number | null;
+  priorClosePrice: number | null;
+  source: string | null;
+  sourceMode: 'live' | 'manual' | null;
+  sourceUrl: string | null;
 }
 
 export interface ImpactResponse {

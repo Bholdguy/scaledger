@@ -107,6 +107,8 @@ input {
 .detail-panel .fact { margin-bottom: 10px; }
 .detail-panel .fact-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
 .detail-panel .fact-value { font-size: 15px; font-weight: 600; }
+.detail-panel .fact-provenance { margin-top: 4px; font-size: 12px; color: var(--muted); }
+.detail-panel .fact-provenance a { color: var(--accent); font-family: monospace; }
 .detail-panel .source-mode {
   display: inline-block;
   margin-top: 2px;

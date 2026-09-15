@@ -151,6 +151,22 @@ function formatUtcDate(iso: string): string {
   return d.toLocaleDateString(undefined, { timeZone: 'UTC', year: 'numeric', month: 'short', day: 'numeric' });
 }
 
+function truncateSignature(sig: string): string {
+  return sig.length > 16 ? `${sig.slice(0, 8)}…${sig.slice(-8)}` : sig;
+}
+
+/** Escapes text inserted into innerHTML — source/sourceUrl ultimately come from a
+ * corporate-action reference row, not user input, but never trust rendered strings by
+ * default when building HTML via template literals. */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function applyBadge(badge: HTMLElement, status: string): void {
   badge.textContent = statusLabel(status);
   badge.className = `badge ${status}`;
@@ -178,6 +194,11 @@ async function toggleDetail(index: number, mint: string, wallet: string): Promis
   }
 }
 
+const SOURCE_MODE_LABELS: Record<string, string> = {
+  live: 'Sourced live',
+  manual: 'Manually sourced',
+};
+
 function renderDetailPanel(record: VerificationRecord, impact: ImpactResponse | null): string {
   const expected =
     record.expectedRatio === null
@@ -185,14 +206,33 @@ function renderDetailPanel(record: VerificationRecord, impact: ImpactResponse | 
       : `${record.expectedRatio.toFixed(6)}%`;
   const actual = `${record.actualRatio.toFixed(6)}%`;
 
+  // Fact (a)'s provenance: the corporate-action reference. Null fields mean
+  // reference_unavailable — never fabricated, per CONTRACT.md.
+  const referenceProvenance =
+    record.sourceMode === null
+      ? '<span class="muted">Reference Unavailable — no corporate-action record could be sourced for this event.</span>'
+      : `<span class="source-mode">${escapeHtml(SOURCE_MODE_LABELS[record.sourceMode] ?? record.sourceMode)}</span>` +
+        (record.dividendSize !== null
+          ? ` — dividend $${record.dividendSize.toFixed(2)}/share, prior close $${record.priorClosePrice?.toFixed(2) ?? '—'}`
+          : '') +
+        (record.sourceUrl
+          ? ` <a href="${escapeHtml(record.sourceUrl)}" target="_blank" rel="noopener">source</a>`
+          : '');
+
+  // Fact (b)'s provenance: the on-chain instruction itself.
+  const explorerUrl = `https://explorer.solana.com/tx/${encodeURIComponent(record.txSignature)}`;
+  const eventProvenance = `<a href="${escapeHtml(explorerUrl)}" target="_blank" rel="noopener">${truncateSignature(record.txSignature)}</a> (effective ${formatUtcDate(record.effectiveTimestamp)})`;
+
   let html = `
     <div class="fact">
       <div class="fact-label">Fact (a) — expected multiplier ratio</div>
       <div class="fact-value">${expected}</div>
+      <div class="fact-provenance">${referenceProvenance}</div>
     </div>
     <div class="fact">
       <div class="fact-label">Fact (b) — actual on-chain multiplier ratio</div>
       <div class="fact-value">${actual}</div>
+      <div class="fact-provenance">${eventProvenance}</div>
     </div>
     <div class="fact">
       <div class="fact-label">Discrepancy</div>
