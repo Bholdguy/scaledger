@@ -133,13 +133,26 @@ async function loadBadge(index: number, mint: string): Promise<void> {
   }
 }
 
+const STATUS_LABELS: Record<string, string> = {
+  verified: 'Verified',
+  discrepancy_flagged: 'Discrepancy Flagged',
+  reference_unavailable: 'Reference Unavailable',
+};
+
+function statusLabel(status: string): string {
+  return STATUS_LABELS[status] ?? status;
+}
+
+/** UTC-explicit date formatting — on-chain effective timestamps must read the same
+ * regardless of the viewer's local timezone (a viewer east of UTC could otherwise see
+ * the Aug 30 event's late-night UTC timestamp roll over to Aug 31). */
+function formatUtcDate(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { timeZone: 'UTC', year: 'numeric', month: 'short', day: 'numeric' });
+}
+
 function applyBadge(badge: HTMLElement, status: string): void {
-  const labels: Record<string, string> = {
-    verified: 'Verified',
-    discrepancy_flagged: 'Discrepancy Flagged',
-    reference_unavailable: 'Reference Unavailable',
-  };
-  badge.textContent = labels[status] ?? status;
+  badge.textContent = statusLabel(status);
   badge.className = `badge ${status}`;
 }
 
@@ -255,10 +268,10 @@ async function loadLedger(wallet: string): Promise<void> {
               (row) => `
             <tr>
               <td>${row.mint.slice(0, 8)}…</td>
-              <td><span class="badge ${row.status}">${row.status}</span></td>
+              <td><span class="badge ${row.status}">${statusLabel(row.status)}</span></td>
               <td>${row.expected_ratio === null ? '—' : row.expected_ratio.toFixed(4) + '%'}</td>
               <td>${row.actual_ratio.toFixed(4)}%</td>
-              <td>${new Date(row.effective_timestamp).toLocaleDateString()}</td>
+              <td>${formatUtcDate(row.effective_timestamp)}</td>
             </tr>
           `,
             )

@@ -10,6 +10,7 @@ import { runVerificationPipeline } from './verificationPipeline.js';
 import { getVerificationForMint } from './verificationService.js';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { existsSync } from 'node:fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -177,6 +178,18 @@ export function createApp() {
     res.setHeader('Content-Type', 'text/csv');
     res.send(`${headers.join(',')}\n${values.join(',')}\n`);
   });
+
+  // Production: serve the built frontend from the same service/origin as the API (no
+  // separate dev proxy needed once built — see vite.config.ts for the dev-only proxy).
+  // Only mounted when a build actually exists, so `npm run dev:server` alone (frontend
+  // served by Vite instead) doesn't 404 on every unmatched path.
+  const distDir = path.join(__dirname, '../../dist');
+  if (existsSync(distDir)) {
+    app.use(express.static(distDir));
+    app.get(/^(?!\/api).*/, (_req, res) => {
+      res.sendFile(path.join(distDir, 'index.html'));
+    });
+  }
 
   return app;
 }

@@ -1,4 +1,8 @@
-export const API_BASE = 'http://localhost:8787';
+/**
+ * Relative — same-origin in production (Express serves the built frontend and the API
+ * from one deployed service) and proxied to the API server in dev (see vite.config.ts).
+ */
+export const API_BASE = '';
 
 export interface Holding {
   mint: string;
