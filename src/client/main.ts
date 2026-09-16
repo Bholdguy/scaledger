@@ -18,22 +18,46 @@ let currentWallet: string | null = null;
 
 function render(): void {
   app.innerHTML = `
-    <h1>Scaledger</h1>
-    <p class="subtitle">Independent, on-chain verification for tokenized-stock rebases — not another balance dashboard.</p>
-    <div class="row">
-      <input id="wallet-input" placeholder="Paste a Solana wallet address (or connect Phantom)" value="${currentWallet ?? ''}" />
-      <button id="load-btn">Load holdings</button>
-      <button id="connect-btn" class="secondary">Connect Phantom</button>
-      <button id="check-btn" class="secondary">Run Live Check</button>
-      <button id="demo-btn" class="secondary">Run Demo</button>
+    <header class="topbar">
+      <a class="wordmark" href="/"><span class="mark">S</span>Scaledger<span class="dot">.</span></a>
+      <nav class="topbar-links">
+        <a href="/">Landing</a>
+        <a href="https://github.com/Bholdguy/scaledger" target="_blank" rel="noopener">Source</a>
+      </nav>
+    </header>
+
+    <div class="page">
+      <div class="page-head">
+        <p class="eyebrow">Scaledger · Verification Dashboard</p>
+        <h1>Check a rebase. Get the receipt.</h1>
+        <p class="page-subtitle">Independent, on-chain verification for tokenized-stock rebases — not another balance dashboard.</p>
+      </div>
+
+      <div class="control-bar">
+        <div class="control-group">
+          <span class="control-label">Wallet</span>
+          <input id="wallet-input" placeholder="Paste a Solana wallet address (or connect Phantom)" value="${currentWallet ?? ''}" />
+          <button id="load-btn">Load Holdings</button>
+          <button id="connect-btn" class="secondary">Connect Phantom</button>
+        </div>
+        <div class="control-group">
+          <span class="control-label">Verification</span>
+          <button id="check-btn" class="secondary">Run Live Check</button>
+          <button id="demo-btn" class="secondary">Run Demo</button>
+        </div>
+      </div>
+
+      <div id="demo-banner"></div>
+      <div id="error"></div>
+
+      <div id="holdings" style="display:none"></div>
+      <div id="ledger-card" style="display:none">
+        <p class="section-label">Verification History</p>
+        <div class="ledger-section">
+          <div id="ledger"></div>
+        </div>
+      </div>
     </div>
-    <div id="demo-banner"></div>
-    <div id="holdings" class="card" style="display:none"></div>
-    <div id="ledger-card" class="card" style="display:none">
-      <strong>Verification history</strong>
-      <div id="ledger"></div>
-    </div>
-    <div id="error" class="error"></div>
   `;
 
   document.getElementById('load-btn')!.addEventListener('click', () => {
@@ -48,7 +72,7 @@ function render(): void {
 async function runLiveCheck(): Promise<void> {
   clearError();
   const banner = document.getElementById('demo-banner')!;
-  banner.innerHTML = '<div class="demo-banner">Running a live check against Solana mainnet — this scans real transaction history and can be slow or rate-limited on public RPC (see DECISIONS.md D10).</div>';
+  banner.innerHTML = '<div class="banner demo">Running a live check against Solana mainnet — this scans real transaction history and can be slow or rate-limited on public RPC (see DECISIONS.md D10).</div>';
   try {
     await runVerification(STRCX_MINT, 'live');
     banner.innerHTML = '';
@@ -79,7 +103,7 @@ async function loadWallet(wallet: string): Promise<void> {
   currentWallet = wallet;
   const holdingsEl = document.getElementById('holdings')!;
   holdingsEl.style.display = 'block';
-  holdingsEl.innerHTML = '<span class="muted">Loading holdings from live Solana RPC…</span>';
+  holdingsEl.innerHTML = '<p class="section-label">Holdings</p><div class="empty-state">Loading holdings from live Solana RPC…</div>';
   try {
     const { holdings } = await fetchHoldings(wallet);
     renderHoldings(holdings, wallet);
@@ -93,26 +117,31 @@ async function loadWallet(wallet: string): Promise<void> {
 function renderHoldings(holdings: Holding[], wallet: string): void {
   const holdingsEl = document.getElementById('holdings')!;
   if (holdings.length === 0) {
-    holdingsEl.innerHTML = '<span class="muted">No allowlisted tokenized-stock holdings found for this wallet.</span>';
+    holdingsEl.innerHTML = '<p class="section-label">Holdings</p><div class="empty-state">No allowlisted tokenized-stock holdings found for this wallet.</div>';
     return;
   }
-  holdingsEl.innerHTML = holdings
-    .map(
-      (h, i) => `
-      <div class="holding">
-        <div>
-          <div class="ticker">${h.ticker}</div>
-          <div class="balance">${h.balance.toLocaleString(undefined, { maximumFractionDigits: 6 })} · last checked ${new Date(h.lastChecked).toLocaleTimeString()}</div>
+  holdingsEl.innerHTML = `
+    <p class="section-label">Holdings</p>
+    <div class="holdings-list">
+      ${holdings
+        .map(
+          (h, i) => `
+        <div class="holding-card">
+          <div class="holding-top">
+            <div>
+              <div class="ticker">${h.ticker}</div>
+              <div class="balance"><span class="mono">${h.balance.toLocaleString(undefined, { maximumFractionDigits: 6 })}</span> · last checked ${new Date(h.lastChecked).toLocaleTimeString()}</div>
+            </div>
+            <span class="status-badge reference_unavailable" id="badge-${i}" data-mint="${h.mint}" data-wallet="${wallet}"><span class="dot"></span>Check status</span>
+          </div>
           ${h.disclosure ? `<div class="disclosure">${h.disclosure.tagText} <a href="${h.disclosure.sourceUrl}" target="_blank" rel="noopener">source</a></div>` : ''}
+          <div id="panel-${i}" class="detail-panel" style="display:none"></div>
         </div>
-        <div>
-          <span class="badge reference_unavailable" id="badge-${i}" data-mint="${h.mint}" data-wallet="${wallet}">Check status</span>
-        </div>
-      </div>
-      <div id="panel-${i}" class="detail-panel" style="display:none"></div>
-    `,
-    )
-    .join('');
+      `,
+        )
+        .join('')}
+    </div>
+  `;
 
   holdings.forEach((h, i) => {
     const badge = document.getElementById(`badge-${i}`)!;
@@ -128,8 +157,7 @@ async function loadBadge(index: number, mint: string): Promise<void> {
     const record = await fetchVerification(mint);
     applyBadge(badge, record.status);
   } catch {
-    badge.textContent = 'Not yet checked';
-    badge.className = 'badge reference_unavailable';
+    applyBadge(badge, 'reference_unavailable', 'Not yet checked');
   }
 }
 
@@ -167,9 +195,9 @@ function escapeHtml(value: string): string {
     .replace(/'/g, '&#39;');
 }
 
-function applyBadge(badge: HTMLElement, status: string): void {
-  badge.textContent = statusLabel(status);
-  badge.className = `badge ${status}`;
+function applyBadge(badge: HTMLElement, status: string, labelOverride?: string): void {
+  badge.innerHTML = `<span class="dot"></span>${escapeHtml(labelOverride ?? statusLabel(status))}`;
+  badge.className = `status-badge ${status}`;
 }
 
 async function toggleDetail(index: number, mint: string, wallet: string): Promise<void> {
@@ -213,7 +241,7 @@ function renderDetailPanel(record: VerificationRecord, impact: ImpactResponse | 
       ? '<span class="muted">Reference Unavailable — no corporate-action record could be sourced for this event.</span>'
       : `<span class="source-mode">${escapeHtml(SOURCE_MODE_LABELS[record.sourceMode] ?? record.sourceMode)}</span>` +
         (record.dividendSize !== null
-          ? ` — dividend $${record.dividendSize.toFixed(2)}/share, prior close $${record.priorClosePrice?.toFixed(2) ?? '—'}`
+          ? ` dividend $${record.dividendSize.toFixed(2)}/share, prior close $${record.priorClosePrice?.toFixed(2) ?? '—'}`
           : '') +
         (record.sourceUrl
           ? ` <a href="${escapeHtml(record.sourceUrl)}" target="_blank" rel="noopener">source</a>`
@@ -224,19 +252,24 @@ function renderDetailPanel(record: VerificationRecord, impact: ImpactResponse | 
   const eventProvenance = `<a href="${escapeHtml(explorerUrl)}" target="_blank" rel="noopener">${truncateSignature(record.txSignature)}</a> (effective ${formatUtcDate(record.effectiveTimestamp)})`;
 
   let html = `
-    <div class="fact">
-      <div class="fact-label">Fact (a) — expected multiplier ratio</div>
-      <div class="fact-value">${expected}</div>
-      <div class="fact-provenance">${referenceProvenance}</div>
+    <div class="fact-grid">
+      <div class="fact">
+        <div class="fact-label">Fact (a) — expected multiplier ratio</div>
+        <div class="fact-value">${expected}</div>
+        <div class="fact-provenance">${referenceProvenance}</div>
+      </div>
+      <div class="fact">
+        <div class="fact-label">Fact (b) — actual on-chain multiplier ratio</div>
+        <div class="fact-value">${actual}</div>
+        <div class="fact-provenance">${eventProvenance}</div>
+      </div>
     </div>
-    <div class="fact">
-      <div class="fact-label">Fact (b) — actual on-chain multiplier ratio</div>
-      <div class="fact-value">${actual}</div>
-      <div class="fact-provenance">${eventProvenance}</div>
-    </div>
-    <div class="fact">
-      <div class="fact-label">Discrepancy</div>
-      <div class="fact-value">${record.discrepancy === null ? '—' : record.discrepancy.toFixed(6) + 'pp'} (tolerance ${record.toleranceUsed}pp)</div>
+    <div class="discrepancy-row">
+      <div>
+        <div class="fact-label">Discrepancy</div>
+        <div class="fact-value">${record.discrepancy === null ? '—' : record.discrepancy.toFixed(6) + 'pp'}</div>
+      </div>
+      <span class="tolerance">tolerance ${record.toleranceUsed}pp</span>
     </div>
   `;
 
@@ -246,13 +279,13 @@ function renderDetailPanel(record: VerificationRecord, impact: ImpactResponse | 
     html += `
       <div class="derived-line">
         <div class="fact-label">Your balance's derived impact</div>
-        <div class="fact-value">expected +${expectedChange} · actual +${impact.personalActualChange.toFixed(6)} (balance ${impact.balance.toLocaleString()})</div>
+        <div class="fact-value mono">expected +${expectedChange} · actual +${impact.personalActualChange.toFixed(6)} (balance ${impact.balance.toLocaleString()})</div>
       </div>
     `;
   }
 
   html += `
-    <div class="row" style="margin-top:12px">
+    <div class="panel-actions">
       <a href="${exportUrl(record.id, 'csv')}" target="_blank"><button class="secondary">Export CSV</button></a>
       <a href="${exportUrl(record.id, 'json')}" target="_blank"><button class="secondary">Export JSON</button></a>
     </div>
@@ -264,11 +297,11 @@ async function runDemo(): Promise<void> {
   clearError();
   const wallet = currentWallet ?? (document.getElementById('wallet-input') as HTMLInputElement).value.trim();
   const banner = document.getElementById('demo-banner')!;
-  banner.innerHTML = '<div class="demo-banner">Running demo — frozen fixture of real STRCx history…</div>';
+  banner.innerHTML = '<div class="banner demo">Running demo — frozen fixture of real STRCx history…</div>';
   try {
     await runVerification(STRCX_MINT, 'demo');
     banner.innerHTML =
-      '<div class="demo-banner">Demo data — frozen fixture of real STRCx history (Aug 30, 2026 rebase). Not a live claim.</div>';
+      '<div class="banner demo">Demo data — frozen fixture of real STRCx history (Aug 30, 2026 rebase). Not a live claim.</div>';
     if (wallet) {
       await loadWallet(wallet);
     } else {
@@ -276,11 +309,16 @@ async function runDemo(): Promise<void> {
       const holdingsEl = document.getElementById('holdings')!;
       holdingsEl.style.display = 'block';
       holdingsEl.innerHTML = `
-        <div class="holding">
-          <div><div class="ticker">STRCx</div><div class="balance">Demo mode — no wallet loaded</div></div>
-          <div><span class="badge ${record.status}" id="demo-badge"></span></div>
+        <p class="section-label">Holdings</p>
+        <div class="holdings-list">
+          <div class="holding-card">
+            <div class="holding-top">
+              <div><div class="ticker">STRCx</div><div class="balance">Demo mode — no wallet loaded</div></div>
+              <span class="status-badge" id="demo-badge"></span>
+            </div>
+            <div class="detail-panel" style="display:block">${renderDetailPanel(record, null)}</div>
+          </div>
         </div>
-        <div class="detail-panel">${renderDetailPanel(record, null)}</div>
       `;
       applyBadge(document.getElementById('demo-badge')!, record.status);
     }
@@ -300,24 +338,36 @@ async function loadLedger(wallet: string): Promise<void> {
     }
     card.style.display = 'block';
     ledger.innerHTML = `
-      <table>
-        <thead><tr><th>Mint</th><th>Status</th><th>Expected</th><th>Actual</th><th>Effective</th></tr></thead>
-        <tbody>
-          ${history
-            .map(
-              (row) => `
-            <tr>
-              <td>${row.mint.slice(0, 8)}…</td>
-              <td><span class="badge ${row.status}">${statusLabel(row.status)}</span></td>
-              <td>${row.expected_ratio === null ? '—' : row.expected_ratio.toFixed(4) + '%'}</td>
-              <td>${row.actual_ratio.toFixed(4)}%</td>
-              <td>${formatUtcDate(row.effective_timestamp)}</td>
-            </tr>
-          `,
-            )
-            .join('')}
-        </tbody>
-      </table>
+      <div class="timeline">
+        ${history
+          .map(
+            (row) => `
+          <div class="timeline-entry">
+            <div class="timeline-node"><span class="dot ${row.status}"></span></div>
+            <div class="timeline-body">
+              <div class="timeline-head">
+                <div class="timeline-title">
+                  <span class="timeline-ticker">${row.mint.slice(0, 8)}…</span>
+                  <span class="status-badge ${row.status}"><span class="dot"></span>${statusLabel(row.status)}</span>
+                </div>
+                <span class="timeline-date">${formatUtcDate(row.effective_timestamp)}</span>
+              </div>
+              <div class="timeline-stats">
+                <div class="timeline-stat">
+                  <span class="label">Expected</span>
+                  <span class="value">${row.expected_ratio === null ? '—' : row.expected_ratio.toFixed(4) + '%'}</span>
+                </div>
+                <div class="timeline-stat">
+                  <span class="label">Actual</span>
+                  <span class="value">${row.actual_ratio.toFixed(4)}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        `,
+          )
+          .join('')}
+      </div>
     `;
   } catch {
     card.style.display = 'none';
@@ -325,11 +375,11 @@ async function loadLedger(wallet: string): Promise<void> {
 }
 
 function showError(msg: string): void {
-  document.getElementById('error')!.textContent = msg;
+  document.getElementById('error')!.innerHTML = `<div class="banner error">${escapeHtml(msg)}</div>`;
 }
 function clearError(): void {
   const el = document.getElementById('error');
-  if (el) el.textContent = '';
+  if (el) el.innerHTML = '';
 }
 
 render();
