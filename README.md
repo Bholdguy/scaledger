@@ -2,8 +2,6 @@
 
 **An independent verification layer for tokenized-stock rebases on Solana — the receipt that tokenized stocks don't currently give you.**
 
-Built for the [Stocklana hackathon](https://hackathons.solana.com/hackathons/stocklana) (Sep 2026, submissions close Fri Sep 18, 4:00pm ET).
-
 ## The real result
 
 Scaledger checked STRCx (Backed Finance's tokenized version of Strategy Inc.'s STRC preferred stock) against its **Aug 30, 2026 rebase** — a real, on-chain Token-2022 `UpdateMultiplierData` instruction ([tx `5SNeWC8Yz...Rg6XDjsm`](https://explorer.solana.com/tx/5SNeWC8YzL7rEHYKmmgYrradpYgTboBRY6WdrH4Z8xwHuK2q4zRd2AthjDtKjYc7vf7vFGxYFA3vGZ69Rg6XDjsm)) — against the real dividend that rebase is supposed to represent.
