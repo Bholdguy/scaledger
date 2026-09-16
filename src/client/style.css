@@ -30,6 +30,33 @@
 
 * { box-sizing: border-box; }
 
+/* ---------- motion ---------- */
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes dotPop {
+  0% { transform: scale(0.3); opacity: 0; }
+  65% { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes badgePulse {
+  0% { transform: scale(1); filter: brightness(1); }
+  40% { transform: scale(1.45); filter: brightness(1.5); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+@keyframes lineGrow {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+@keyframes archBreathe {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.035); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 html { background: var(--bg); }
 
 body {
@@ -170,16 +197,21 @@ button {
   border: 1px solid transparent;
   cursor: pointer;
   white-space: nowrap;
-  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease,
+    box-shadow 0.15s ease, filter 0.15s ease;
 }
-button:hover { transform: translateY(-1px); }
+button:hover { transform: translateY(-1px); filter: brightness(1.08); }
+button:active { transform: translateY(0) scale(0.97); filter: brightness(0.97); }
 button:focus-visible { outline: 2px solid var(--accent-bright); outline-offset: 2px; }
-button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; filter: none; }
 
 button:not(.secondary) {
   background: linear-gradient(180deg, #9a6ef2, var(--accent));
   color: #fff;
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.25) inset, 0 8px 20px -10px rgba(134, 87, 230, 0.7);
+}
+button:not(.secondary):hover {
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset, 0 10px 26px -8px rgba(134, 87, 230, 0.85);
 }
 button.secondary {
   background: rgba(255, 255, 255, 0.02);
@@ -187,6 +219,19 @@ button.secondary {
   border-color: var(--border-strong);
 }
 button.secondary:hover { border-color: var(--accent-bright); background: rgba(255, 255, 255, 0.05); }
+
+/* in-progress state — Run Live Check / Run Demo while their fetch is in flight */
+.spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+  flex-shrink: 0;
+}
+button.is-loading { cursor: progress; }
 
 /* ---------- status badge (dot + label) ---------- */
 .status-badge {
@@ -202,13 +247,17 @@ button.secondary:hover { border-color: var(--accent-bright); background: rgba(25
   font-family: var(--body-font);
   white-space: nowrap;
 }
-.status-badge .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.status-badge .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; transition: background 0.25s ease, box-shadow 0.25s ease; }
 .status-badge.verified { background: var(--verified-bg); color: var(--verified); border-color: var(--verified-border); }
 .status-badge.verified .dot { background: var(--verified); box-shadow: 0 0 8px var(--verified); }
 .status-badge.discrepancy_flagged { background: var(--flagged-bg); color: var(--flagged); border-color: var(--flagged-border); }
 .status-badge.discrepancy_flagged .dot { background: var(--flagged); box-shadow: 0 0 8px var(--flagged); }
 .status-badge.reference_unavailable { background: var(--unavailable-bg); color: var(--unavailable); border-color: var(--unavailable-border); }
 .status-badge.reference_unavailable .dot { background: var(--unavailable); }
+
+.status-badge { animation: fadeSlideIn 200ms ease both; transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease; }
+/* micro-interaction: a brief scale/glow pop on the dot when a badge's status changes */
+.status-badge.pulsing .dot { animation: badgePulse 500ms ease-out; }
 
 /* ---------- demo / error banners ---------- */
 .banner {
@@ -239,6 +288,7 @@ button.secondary:hover { border-color: var(--accent-bright); background: rgba(25
   border-radius: 16px;
   padding: 20px 22px;
   transition: border-color 0.15s ease;
+  animation: fadeSlideIn 220ms ease both;
 }
 .holding-card:hover { border-color: var(--border-strong); }
 
@@ -279,7 +329,9 @@ button.secondary:hover { border-color: var(--accent-bright); background: rgba(25
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 14px 16px;
+  animation: fadeSlideIn 220ms ease both;
 }
+.fact-grid .fact:nth-child(2) { animation-delay: 40ms; }
 .fact-label {
   color: var(--text-faint);
   font-size: 10.5px;
@@ -316,6 +368,7 @@ button.secondary:hover { border-color: var(--accent-bright); background: rgba(25
   border: 1px solid var(--border);
   border-radius: 12px;
   margin-bottom: 14px;
+  animation: fadeSlideIn 220ms ease 80ms both;
 }
 .discrepancy-row .fact-label { margin-right: auto; }
 .discrepancy-row .fact-value { font-size: 17px; }
@@ -327,12 +380,13 @@ button.secondary:hover { border-color: var(--accent-bright); background: rgba(25
   border-radius: 12px;
   background: transparent;
   margin-bottom: 16px;
+  animation: fadeSlideIn 220ms ease 120ms both;
 }
 .derived-line .fact-label { display: block; }
 .derived-line .fact-label::after { content: ' · derived, not an independent source'; color: var(--text-faint); font-weight: 400; text-transform: none; letter-spacing: 0; }
 .derived-line .fact-value { font-size: 15px; }
 
-.panel-actions { display: flex; gap: 10px; }
+.panel-actions { display: flex; gap: 10px; animation: fadeSlideIn 220ms ease 160ms both; }
 
 /* ---------- ledger timeline ---------- */
 .ledger-section { margin-top: 8px; }
@@ -345,6 +399,8 @@ button.secondary:hover { border-color: var(--accent-bright); background: rgba(25
   bottom: 6px;
   width: 1px;
   background: linear-gradient(var(--border-strong), var(--border-strong) 90%, transparent);
+  transform-origin: top;
+  animation: lineGrow 650ms ease-out both;
 }
 
 .timeline-entry {
@@ -352,6 +408,7 @@ button.secondary:hover { border-color: var(--accent-bright); background: rgba(25
   display: flex;
   gap: 18px;
   padding: 14px 0;
+  animation: fadeSlideIn 220ms ease both;
 }
 .timeline-node {
   flex-shrink: 0;
@@ -368,6 +425,7 @@ button.secondary:hover { border-color: var(--accent-bright); background: rgba(25
   box-shadow: 0 0 0 1px var(--border-strong);
   position: relative;
   z-index: 1;
+  animation: dotPop 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 .timeline-node .dot.verified { background: var(--verified); box-shadow: 0 0 0 1px var(--border-strong), 0 0 10px var(--verified); }
 .timeline-node .dot.discrepancy_flagged { background: var(--flagged); box-shadow: 0 0 0 1px var(--border-strong), 0 0 10px var(--flagged); }
@@ -418,5 +476,9 @@ button.secondary:hover { border-color: var(--accent-bright); background: rgba(25
 }
 
 @media (prefers-reduced-motion: reduce) {
-  button { transition: none; }
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
 }

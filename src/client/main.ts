@@ -69,16 +69,36 @@ function render(): void {
   document.getElementById('demo-btn')!.addEventListener('click', runDemo);
 }
 
+/** Shows a visible in-progress state on a button while its async work runs — a text
+ * change plus a static ring that spins only when motion is allowed (see the
+ * prefers-reduced-motion kill switch in style.css), never an artificial delay. */
+function setButtonLoading(btn: HTMLButtonElement, loadingLabel: string): void {
+  btn.dataset.originalLabel = btn.textContent ?? '';
+  btn.disabled = true;
+  btn.classList.add('is-loading');
+  btn.innerHTML = `<span class="spinner" aria-hidden="true"></span>${escapeHtml(loadingLabel)}`;
+}
+
+function clearButtonLoading(btn: HTMLButtonElement): void {
+  btn.disabled = false;
+  btn.classList.remove('is-loading');
+  btn.textContent = btn.dataset.originalLabel ?? btn.textContent;
+}
+
 async function runLiveCheck(): Promise<void> {
   clearError();
+  const btn = document.getElementById('check-btn') as HTMLButtonElement;
   const banner = document.getElementById('demo-banner')!;
   banner.innerHTML = '<div class="banner demo">Running a live check against Solana mainnet — this scans real transaction history and can be slow or rate-limited on public RPC (see DECISIONS.md D10).</div>';
+  setButtonLoading(btn, 'Checking…');
   try {
     await runVerification(STRCX_MINT, 'live');
     banner.innerHTML = '';
     if (currentWallet) await loadWallet(currentWallet);
   } catch (err) {
     showError(err instanceof Error ? err.message : String(err));
+  } finally {
+    clearButtonLoading(btn);
   }
 }
 
@@ -126,7 +146,7 @@ function renderHoldings(holdings: Holding[], wallet: string): void {
       ${holdings
         .map(
           (h, i) => `
-        <div class="holding-card">
+        <div class="holding-card" style="animation-delay:${i * 50}ms">
           <div class="holding-top">
             <div>
               <div class="ticker">${h.ticker}</div>
@@ -198,6 +218,15 @@ function escapeHtml(value: string): string {
 function applyBadge(badge: HTMLElement, status: string, labelOverride?: string): void {
   badge.innerHTML = `<span class="dot"></span>${escapeHtml(labelOverride ?? statusLabel(status))}`;
   badge.className = `status-badge ${status}`;
+  pulseBadge(badge);
+}
+
+/** Replays the badge's dot-pulse keyframe (a class already present won't retrigger a CSS
+ * animation on its own — removing it, forcing a reflow, then re-adding it restarts it). */
+function pulseBadge(el: HTMLElement): void {
+  el.classList.remove('pulsing');
+  void el.offsetWidth;
+  el.classList.add('pulsing');
 }
 
 async function toggleDetail(index: number, mint: string, wallet: string): Promise<void> {
@@ -295,9 +324,11 @@ function renderDetailPanel(record: VerificationRecord, impact: ImpactResponse | 
 
 async function runDemo(): Promise<void> {
   clearError();
+  const btn = document.getElementById('demo-btn') as HTMLButtonElement;
   const wallet = currentWallet ?? (document.getElementById('wallet-input') as HTMLInputElement).value.trim();
   const banner = document.getElementById('demo-banner')!;
   banner.innerHTML = '<div class="banner demo">Running demo — frozen fixture of real STRCx history…</div>';
+  setButtonLoading(btn, 'Running…');
   try {
     await runVerification(STRCX_MINT, 'demo');
     banner.innerHTML =
@@ -324,6 +355,8 @@ async function runDemo(): Promise<void> {
     }
   } catch (err) {
     showError(err instanceof Error ? err.message : String(err));
+  } finally {
+    clearButtonLoading(btn);
   }
 }
 
@@ -341,9 +374,9 @@ async function loadLedger(wallet: string): Promise<void> {
       <div class="timeline">
         ${history
           .map(
-            (row) => `
-          <div class="timeline-entry">
-            <div class="timeline-node"><span class="dot ${row.status}"></span></div>
+            (row, i) => `
+          <div class="timeline-entry" style="animation-delay:${i * 45}ms">
+            <div class="timeline-node"><span class="dot ${row.status}" style="animation-delay:${i * 45 + 80}ms"></span></div>
             <div class="timeline-body">
               <div class="timeline-head">
                 <div class="timeline-title">

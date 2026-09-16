@@ -189,6 +189,15 @@
       radial-gradient(closest-side, rgba(185, 147, 255, 0.9), rgba(134, 87, 230, 0.55) 42%, rgba(134, 87, 230, 0) 72%);
     filter: blur(6px);
     opacity: 0.85;
+    transform-origin: center;
+  }
+  /* barely-perceptible ambient breathing glow — never applied under reduced motion */
+  @keyframes archBreathe {
+    0%, 100% { opacity: 0.85; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.035); }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .arch::before { animation: archBreathe 10s ease-in-out infinite; }
   }
   .arch::after {
     content: "";
@@ -510,7 +519,11 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .btn { transition: none; }
+    *, *::before, *::after {
+      animation: none !important;
+      transition: none !important;
+      scroll-behavior: auto !important;
+    }
   }
 </style>
 
