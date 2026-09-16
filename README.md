@@ -75,8 +75,6 @@ Full spec: [`PRD.md`](./PRD.md), [`ARCHITECTURE.md`](./ARCHITECTURE.md), [`SECUR
 
 ## Live demo
 
-**https://scaledger-production.up.railway.app** — the landing page, with the real result above front and center.
-
 **https://scaledger-production.up.railway.app/app** — the functional dashboard directly. Click "Run Demo" to replay the real STRCx result without touching live RPC, or paste a wallet address and click "Run Live Check" for the live path.
 
 ## Why Solana
